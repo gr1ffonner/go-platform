@@ -51,3 +51,27 @@ func (d *DogAPI) GetRandomDogImageByBreed(breed string) (string, error) {
 	slog.Info("Successfully retrieved random dog image", "breed", breed)
 	return response.Message, nil
 }
+
+// DownloadDogImage downloads the actual image from the given URL and returns it as bytes
+func (d *DogAPI) DownloadDogImage(imageURL string) ([]byte, error) {
+	// Create a new client for downloading images (without base URL)
+	imageClient := resty.New().
+		SetTimeout(timeout).
+		SetHeader("User-Agent", "Go-Platform/1.0")
+
+	res, err := imageClient.R().
+		Get(imageURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to download image")
+	}
+
+	if res.IsError() {
+		slog.Error("Failed to download image", "url", imageURL, "status", res.StatusCode())
+		return nil, fmt.Errorf("received non-200 response status: %d", res.StatusCode())
+	}
+
+	imageBytes := res.Bytes()
+	slog.Info("Successfully downloaded image", "url", imageURL, "size_bytes", len(imageBytes))
+
+	return imageBytes, nil
+}

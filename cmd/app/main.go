@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	restclientexample "go-platform/internal/clients/rest-client-example"
+	"go-platform/internal/clients/s3"
 	grpc "go-platform/internal/gprc"
 	"go-platform/internal/handlers"
+	"go-platform/internal/service/dogs"
 	"go-platform/pkg/broker/nats"
 	"go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
@@ -88,6 +91,22 @@ func main() {
 
 	slog.Info("Database connected successfully")
 
+	// Initialize S3 client
+	s3Client, err := s3.NewClientS3(
+		cfg.S3.KeyID,
+		cfg.S3.KeySecret,
+		cfg.S3.Bucket,
+		cfg.S3.BaseEndpoint,
+		cfg.S3.BasePublicEndpoint,
+		cfg.S3.Region,
+	)
+	if err != nil {
+		log.Error("Failed to connect to S3", "error", err)
+		panic(err)
+	}
+
+	slog.Info("S3 client connected successfully")
+
 	// Initialize cache
 	cache, err := redis.NewRedis(ctx, cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
 	if err != nil {
@@ -106,8 +125,14 @@ func main() {
 
 	slog.Info("Broker connected successfully")
 
+	// Initialize dog API client
+	dogsAPI := restclientexample.NewDogAPI()
+
+	// Initialize dogs service
+	dogsService := dogs.NewDogsService(dogsAPI, s3Client)
+
 	// Initialize handlers and router
-	handler := handlers.NewHandler()
+	handler := handlers.NewHandler(dogsService)
 	router := handlers.InitRouter(handler)
 
 	grpcPort := cfg.Server.GRPCPort

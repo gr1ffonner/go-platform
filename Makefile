@@ -52,6 +52,10 @@ migrate-create:
 	@read -p "Enter PostgreSQL migration name: " NAME; \
 	goose -dir $(MIGRATION_DIR_PG) create $$NAME sql
 
+bucket-create:
+	docker exec platform_minio mc alias set myminio http://localhost:9000 minioadmin minioadmin
+	docker exec platform_minio mc mb myminio/dogs
+
 # Swagger documentation
 check-swagger: 
 	@command -v which swag >/dev/null 2>&1 || { \
@@ -69,3 +73,4 @@ proto-all:
     --go-grpc_out=. \
 	--go-grpc_opt=paths=source_relative \
     api/protobuf/*.proto
+

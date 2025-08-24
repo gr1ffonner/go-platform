@@ -1,5 +1,22 @@
 services:
-  # Core Infrastructure Services for Development
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: platform_app
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+      - redis
+      - nats
+    networks:
+      - platform_network
+    profiles:
+      - test
+      
   postgres:
     image: postgres:15-alpine
     container_name: platform_postgres
@@ -28,6 +45,17 @@ services:
     networks:
       - platform_network
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: platform_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+
   nats:
     image: nats:2.10-alpine
     container_name: platform_nats
@@ -38,24 +66,6 @@ services:
     networks:
       - platform_network
 
-  # Application Service
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: platform_app
-    env_file:
-      - .env
-    ports:
-      - "${APP_PORT:-8080}:8080"
-    depends_on:
-      - postgres
-      - redis
-      - nats
-    networks:
-      - platform_network
-    profiles:
-      - test
 
 volumes:
   postgres_data:

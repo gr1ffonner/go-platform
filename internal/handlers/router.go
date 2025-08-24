@@ -26,5 +26,10 @@ func InitRouter(h *Handler) *mux.Router {
 		router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	}
 
+	// Dogs
+	{
+		router.HandleFunc("/api/v1/dogs/{breed}/image", h.GetRandomDogImageByBreed).Methods(http.MethodGet)
+	}
+
 	return router
 }

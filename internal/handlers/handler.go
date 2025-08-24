@@ -1,8 +1,17 @@
 package handlers
 
-type Handler struct {
+import "context"
+
+type DogsService interface {
+	GetRandomDogImage(ctx context.Context, breed string) (string, error)
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+type Handler struct {
+	dogsService DogsService
+}
+
+func NewHandler(dogsService DogsService) *Handler {
+	return &Handler{
+		dogsService: dogsService,
+	}
 }
