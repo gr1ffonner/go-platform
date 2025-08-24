@@ -2,15 +2,63 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	grpc "go-platform/internal/gprc"
+	"go-platform/internal/handlers"
 	"go-platform/pkg/broker/nats"
 	"go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
 	"go-platform/pkg/db/postgre"
 	"go-platform/pkg/logger"
 	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
-// @title	    Go Platform
+// gracefulShutdown handles the graceful shutdown of all services
+func gracefulShutdown(ctx context.Context, log *slog.Logger, services ...any) {
+	// Create shutdown context with timeout
+	shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	log.Info("Shutting down services...")
+
+	// Shutdown each service
+	for _, service := range services {
+		switch s := service.(type) {
+		case *http.Server:
+			if err := s.Shutdown(shutdownCtx); err != nil {
+				log.Error("HTTP server shutdown failed", "error", err)
+			} else {
+				log.Info("HTTP server stopped gracefully")
+			}
+		case interface{ GracefulStop() }:
+			s.GracefulStop()
+			log.Info("gRPC server stopped gracefully")
+		case *postgre.PostgresClient:
+			s.Close()
+			log.Info("Database connection closed")
+		case *redis.RedisClient:
+			if err := s.Close(); err != nil {
+				log.Error("Cache connection close failed", "error", err)
+			} else {
+				log.Info("Cache connection closed")
+			}
+		case *nats.NATSClient:
+			s.Close()
+			log.Info("Broker connection closed")
+		}
+	}
+
+	log.Info("All services stopped")
+}
+
+// @title			Go Platform
 // @version		1.0
 // @description	Go Platform API
 func main() {
@@ -27,7 +75,9 @@ func main() {
 
 	slog.Info("Config and logger initialized")
 
-	ctx := context.Background()
+	// Create main context with cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Initialize database
 	db, err := postgre.NewPostgres(ctx, cfg.Database.DSN)
@@ -35,8 +85,8 @@ func main() {
 		log.Error("Failed to connect to database", "error", err)
 		panic(err)
 	}
-	defer db.Close()
-	log.Info("Database connected successfully")
+
+	slog.Info("Database connected successfully")
 
 	// Initialize cache
 	cache, err := redis.NewRedis(ctx, cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
@@ -44,8 +94,8 @@ func main() {
 		log.Error("Failed to connect to Redis", "error", err)
 		panic(err)
 	}
-	defer cache.Close()
-	log.Info("Redis connected successfully")
+
+	slog.Info("Cache connected successfully")
 
 	// Initialize broker
 	broker, err := nats.NewNATS(ctx, cfg.NATS.URL)
@@ -53,6 +103,63 @@ func main() {
 		log.Error("Failed to connect to NATS", "error", err)
 		panic(err)
 	}
-	defer broker.Close()
-	log.Info("NATS connected successfully")
+
+	slog.Info("Broker connected successfully")
+
+	// Initialize handlers and router
+	handler := handlers.NewHandler()
+	router := handlers.InitRouter(handler)
+
+	grpcPort := cfg.Server.GRPCPort
+	httpPort := cfg.Server.HTTPPort
+
+	// HTTP server
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf(":%s", httpPort),
+		Handler: router,
+	}
+
+	// gRPC server
+	grpcServer := grpc.NewServer()
+
+	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
+	if err != nil {
+		log.Error("failed to create gRPC listener", "error", err)
+		os.Exit(1)
+	}
+
+	// Setup signal handling
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Start HTTP server
+	go func() {
+		log.Info("Starting HTTP server", "port", httpPort)
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Error("HTTP server error", "error", err)
+			cancel()
+		}
+	}()
+
+	// Start gRPC server
+	go func() {
+		log.Info("Starting gRPC server", "port", grpcPort)
+		if err := grpcServer.Serve(grpcListener); err != nil {
+			log.Error("failed to serve gRPC", "error", err)
+			cancel()
+		}
+	}()
+
+	log.Info("All servers are ready to handle requests")
+
+	// Wait for shutdown signal
+	select {
+	case <-stop:
+		log.Info("Shutdown signal received")
+	case <-ctx.Done():
+		log.Info("Context canceled")
+	}
+
+	// Graceful shutdown
+	gracefulShutdown(ctx, log, httpServer, grpcServer, db, cache, broker)
 }

@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string `env:"SERVER_PORT" env-default:"8080"`
+	HTTPPort string `env:"SERVER_PORT" env-default:"8080"`
+	GRPCPort string `env:"GRPC_PORT" env-default:"50051"`
 }
 
 type Logger struct {

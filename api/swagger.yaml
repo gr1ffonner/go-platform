@@ -1,0 +1,25 @@
+info:
+  contact: {}
+  description: Go Platform API
+  title: Go Platform
+  version: "1.0"
+paths:
+  /live:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: internal server error
+          schema:
+            type: string
+      summary: Health check
+      tags:
+      - Health
+swagger: "2.0"

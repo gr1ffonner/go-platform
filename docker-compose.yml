@@ -1,5 +1,5 @@
 services:
-  # Core Infrastructure Services
+  # Core Infrastructure Services for Development
   postgres:
     image: postgres:15-alpine
     container_name: platform_postgres
@@ -13,64 +13,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - platform_network
-    profiles:
-      - infra
-      - dev
-      - test
-      - prod
-
-  mysql:
-    image: mysql:8.0
-    container_name: platform_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-go_platform}
-      MYSQL_USER: ${MYSQL_USER:-admin}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-admin}
-    ports:
-      - "${MYSQL_PORT:-3306}:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - platform_network
-    profiles:
-      - mysql
-      - full
-
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: platform_clickhouse
-    environment:
-      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-go_platform}
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-admin}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-admin}
-    ports:
-      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
-      - "${CLICKHOUSE_TCP_PORT:-9000}:9000"
-    volumes:
-      - clickhouse_data:/var/lib/clickhouse
-    networks:
-      - platform_network
-    profiles:
-      - clickhouse
-      - analytics
-      - full
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
+    command: redis-server --appendonly no --save "" --requirepass ""  
     container_name: platform_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-admin}
+    env_file:
+      - .env
+    environment:
+      REDIS_ZONE_ID: "25"
+      REDIS_PORT: "6379"
     ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
+      - "6379:6379"
     networks:
       - platform_network
-    profiles:
-      - infra
-      - dev
-      - test
-      - prod
 
   nats:
     image: nats:2.10-alpine
@@ -81,81 +37,8 @@ services:
     command: ["-m", "8222", "-js"]
     networks:
       - platform_network
-    profiles:
-      - infra
-      - dev
-      - test
-      - prod
 
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: platform_kafka
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    ports:
-      - "${KAFKA_PORT:-9092}:9092"
-    depends_on:
-      - zookeeper
-    networks:
-      - platform_network
-    profiles:
-      - kafka
-      - messaging
-      - full
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: platform_zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - platform_network
-    profiles:
-      - kafka
-      - messaging
-      - full
-
-  rabbitmq:
-    image: rabbitmq:3.12-management-alpine
-    container_name: platform_rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin}
-    ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - platform_network
-    profiles:
-      - rabbitmq
-      - messaging
-      - full
-
-  minio:
-    image: minio/minio:latest
-    container_name: platform_minio
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-admin}
-    ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - platform_network
-    profiles:
-      - storage
-      - s3
-      - full
-
-  # Application Services
+  # Application Service
   app:
     build:
       context: .
@@ -172,52 +55,11 @@ services:
     networks:
       - platform_network
     profiles:
-      - app
-      - dev
       - test
-
-  # Monitoring & Observability
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: platform_prometheus
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    networks:
-      - platform_network
-    profiles:
-      - monitoring
-      - observability
-      - full
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: platform_grafana
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - platform_network
-    profiles:
-      - monitoring
-      - observability
-      - full
 
 volumes:
   postgres_data:
-  mysql_data:
-  mariadb_data:
-  clickhouse_data:
   redis_data:
-  rabbitmq_data:
-  minio_data:
-  prometheus_data:
-  grafana_data:
 
 networks:
   platform_network:
