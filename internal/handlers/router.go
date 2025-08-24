@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	_ "go-platform/api"
+
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 )

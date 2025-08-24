@@ -21,6 +21,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	
+	_ "go-platform/api" // Import Swagger docs
 )
 
 // gracefulShutdown handles the graceful shutdown of all services

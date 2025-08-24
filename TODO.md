@@ -3,7 +3,6 @@
 - project struct + arch
 - http finalizer
 - swagger docs
-- grpc server + middlewares 
 - metrics
 - tracing
 

@@ -7,6 +7,53 @@
         "version": "1.0"
     },
     "paths": {
+        "/api/v1/dogs/{breed}/image": {
+            "get": {
+                "description": "Retrieves a random dog image for the specified breed, downloads it, and uploads to S3",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dogs"
+                ],
+                "summary": "Get random dog image by breed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dog breed",
+                        "name": "breed",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "S3 URL of the uploaded image",
+                        "schema": {
+                            "$ref": "#/definitions/go-platform_internal_models_dogs.DogImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/go-platform_pkg_utils_http-utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/go-platform_pkg_utils_http-utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/go-platform_pkg_utils_http-utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/live": {
             "get": {
                 "consumes": [
@@ -32,6 +79,53 @@
                             "type": "string"
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "go-platform_internal_models_dogs.DogImageResponse": {
+            "type": "object",
+            "properties": {
+                "breed": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-platform_pkg_utils_http-utils.ErrorDetail": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "go-platform_pkg_utils_http-utils.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/go-platform_pkg_utils_http-utils.ErrorDetail"
+                    }
+                },
+                "log_timestamp": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
                 }
             }
         }
