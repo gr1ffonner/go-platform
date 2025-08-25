@@ -26,7 +26,6 @@ func LogInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServer
 		ctx,
 		"gRPC call started",
 		"method", info.FullMethod,
-		"request", req,
 	)
 
 	// Execute the handler
@@ -38,7 +37,6 @@ func LogInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServer
 			ctx,
 			"gRPC call completed successfully",
 			"method", info.FullMethod,
-			"response", resp,
 		)
 	} else {
 		grpcErr, ok := status.FromError(err)

@@ -8,10 +8,13 @@ import (
 	"go-platform/internal/clients/s3"
 	grpc "go-platform/internal/gprc"
 	"go-platform/internal/handlers"
-	"go-platform/internal/service/dogs"
+	"go-platform/internal/services/dogs"
+	"go-platform/internal/storages/postgresql"
 	"go-platform/pkg/broker/nats"
 	"go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
+	"go-platform/pkg/db/clickhouse"
+	"go-platform/pkg/db/mysql"
 	"go-platform/pkg/db/postgre"
 	"go-platform/pkg/logger"
 	"log/slog"
@@ -21,7 +24,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	
+
 	_ "go-platform/api" // Import Swagger docs
 )
 
@@ -47,7 +50,13 @@ func gracefulShutdown(ctx context.Context, log *slog.Logger, services ...any) {
 			log.Info("gRPC server stopped gracefully")
 		case *postgre.PostgresClient:
 			s.Close()
-			log.Info("Database connection closed")
+			log.Info("Postgres connection closed")
+		case *mysql.MySQLClient:
+			s.Close()
+			log.Info("Mysql connection closed")
+		case *clickhouse.ClickHouseClient:
+			s.Close()
+			log.Info("Clickhouse connection closed")
 		case *redis.RedisClient:
 			if err := s.Close(); err != nil {
 				log.Error("Cache connection close failed", "error", err)
@@ -84,14 +93,38 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize database
-	db, err := postgre.NewPostgres(ctx, cfg.Database.DSN)
+	// Initialize postgres
+	pgStorage, err := postgre.NewPostgres(ctx, cfg.Database.PostgresDSN)
 	if err != nil {
-		log.Error("Failed to connect to database", "error", err)
+		log.Error("Failed to connect to postgres", "error", err)
 		panic(err)
 	}
 
-	slog.Info("Database connected successfully")
+	pgRepository := postgresql.NewPostgresRepository(pgStorage)
+
+	slog.Info("Postgres connected successfully")
+
+	// Initialize mysql
+	mysqlStorage, err := mysql.NewMySQL(ctx, cfg.Database.MySQLDSN)
+	if err != nil {
+		log.Error("Failed to connect to mysql", "error", err)
+		panic(err)
+	}
+
+	// mysqlRepository := mysqlRepo.NewMySQLRepository(mysqlStorage)
+
+	slog.Info("Mysql connected successfully")
+
+	// Initialize clickhouse
+	clickhouseStorage, err := clickhouse.NewClickHouse(ctx, cfg.Database.ClickHouseDSN)
+	if err != nil {
+		log.Error("Failed to connect to clickhouse", "error", err)
+		panic(err)
+	}
+
+	// clickhouseRepository := clickhouseRepo.NewClickHouseRepository(clickhouseStorage)
+
+	slog.Info("Clickhouse connected successfully")
 
 	// Initialize S3 client
 	s3Client, err := s3.NewClientS3(
@@ -131,7 +164,7 @@ func main() {
 	dogsAPI := restclientexample.NewDogAPI()
 
 	// Initialize dogs service
-	dogsService := dogs.NewDogsService(dogsAPI, s3Client)
+	dogsService := dogs.NewDogsService(dogsAPI, s3Client, pgRepository)
 
 	// Initialize handlers and router
 	handler := handlers.NewHandler(dogsService)
@@ -188,5 +221,14 @@ func main() {
 	}
 
 	// Graceful shutdown
-	gracefulShutdown(ctx, log, httpServer, grpcServer, db, cache, broker)
+	gracefulShutdown(ctx,
+		log,
+		httpServer,
+		grpcServer,
+		pgStorage,
+		mysqlStorage,
+		clickhouseStorage,
+		cache,
+		broker,
+	)
 }

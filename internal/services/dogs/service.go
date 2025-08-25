@@ -3,6 +3,7 @@ package dogs
 import (
 	"context"
 	"fmt"
+	models "go-platform/internal/models/dogs"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -17,15 +18,23 @@ type ClientS3 interface {
 	GenerateURL(key string) string
 }
 
-type DogsService struct {
-	dogAPI   DogAPIClient
-	clientS3 ClientS3
+type Repository interface {
+	// return string due to clickhouse dont have auto increment and
+	// we should use uuid for simple row
+	InsertDog(ctx context.Context, dog *models.Dog) (string, error)
 }
 
-func NewDogsService(dogAPI DogAPIClient, clientS3 ClientS3) *DogsService {
+type DogsService struct {
+	dogAPI     DogAPIClient
+	clientS3   ClientS3
+	repository Repository
+}
+
+func NewDogsService(dogAPI DogAPIClient, clientS3 ClientS3, repository Repository) *DogsService {
 	return &DogsService{
-		dogAPI:   dogAPI,
-		clientS3: clientS3,
+		dogAPI:     dogAPI,
+		clientS3:   clientS3,
+		repository: repository,
 	}
 }
 

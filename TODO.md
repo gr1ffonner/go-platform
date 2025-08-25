@@ -1,14 +1,16 @@
-- middlewares (logging)
+- middlewares (logging) - done
 - proper erros
-- project struct + arch
+- project struct + arch - semi done
 - http finalizer
-- swagger docs
+- swagger docs - done
 - metrics
 - tracing
 
 ------- Storages -------
 postgresql - sql 
-s3 - file storage
+s3 - file storage - done
 mongodb - doc db
 mysql - sql
+redis - cache
+postgresql - sql
 clickhouse - column oriented

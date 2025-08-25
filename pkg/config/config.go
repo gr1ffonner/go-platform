@@ -37,7 +37,9 @@ type Logger struct {
 }
 
 type DatabaseConfig struct {
-	DSN string `env:"DB_DSN" env-required:"true"`
+	PostgresDSN   string `env:"POSTGRES_DSN" env-required:"true"`
+	MySQLDSN      string `env:"MYSQL_DSN" env-required:"true"`
+	ClickHouseDSN string `env:"CLICKHOUSE_DSN" env-required:"true"`
 }
 
 type RedisConfig struct {
