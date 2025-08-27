@@ -70,5 +70,18 @@ func (s *DogsService) GetRandomDogImage(ctx context.Context, breed string) (stri
 	// Generate and return the S3 URL
 	s3URL := s.clientS3.GenerateURL(imageKey)
 	slog.Info("Dog image retrieval completed", "breed", breed, "s3_url", s3URL)
+
+	// save into local database
+	dog := &models.Dog{
+		Breed:    breed,
+		ImageURL: s3URL,
+	}
+
+	_, err = s.repository.InsertDog(ctx, dog)
+	if err != nil {
+		slog.Error("Failed to insert dog into database", "breed", breed, "error", err)
+		return imageURL, fmt.Errorf("failed to insert dog into database: %w", err)
+	}
+
 	return s3URL, nil
 }

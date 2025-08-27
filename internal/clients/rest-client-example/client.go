@@ -54,12 +54,7 @@ func (d *DogAPI) GetRandomDogImageByBreed(breed string) (string, error) {
 
 // DownloadDogImage downloads the actual image from the given URL and returns it as bytes
 func (d *DogAPI) DownloadDogImage(imageURL string) ([]byte, error) {
-	// Create a new client for downloading images (without base URL)
-	imageClient := resty.New().
-		SetTimeout(timeout).
-		SetHeader("User-Agent", "Go-Platform/1.0")
-
-	res, err := imageClient.R().
+	res, err := d.rClient.R().
 		Get(imageURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to download image")
