@@ -7,6 +7,7 @@ import (
 	proto "go-platform/api/protobuf"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -15,6 +16,10 @@ func ValidationInterceptor(ctx context.Context, req interface{}, _ *grpc.UnarySe
 	case *proto.HealthCheckRequest:
 		slog.Info("Middleware for HealthCheckRequest started", "request", val)
 		return handler(ctx, req)
+	case *proto.GetRandomDogImageRequest:
+		if val.GetBreed() == "" {
+			return nil, status.Errorf(codes.InvalidArgument, "breed is required")
+		}
 	}
 	return handler(ctx, req)
 

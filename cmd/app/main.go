@@ -180,7 +180,7 @@ func main() {
 	}
 
 	// gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(dogsService)
 
 	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
 	if err != nil {

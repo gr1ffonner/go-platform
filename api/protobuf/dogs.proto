@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "dogs/proto/";
+
+package go_platform.dogs;
+
+import "google/protobuf/timestamp.proto";
+
+// Dog service definition
+service DogService {
+  rpc GetRandomDogImage(GetRandomDogImageRequest) returns (GetRandomDogImageResponse);
+}
+
+// Request message for getting a random dog image by breed
+message GetRandomDogImageRequest {
+  string breed = 1;
+}
+
+// Response message containing the dog image information
+message GetRandomDogImageResponse {
+  string image_url = 1;
+  string breed = 2;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// Error response message
+message ErrorResponse {
+  string message = 1;
+  string error = 2;
+  int32 status_code = 3;
+} 

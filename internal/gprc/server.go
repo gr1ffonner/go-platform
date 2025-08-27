@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"context"
 	"net"
 
 	proto "go-platform/api/protobuf"
@@ -9,13 +10,20 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type server struct {
-	grpcServer *grpc.Server
-	proto.UnimplementedHealthServer
+type DogsService interface {
+	GetRandomDogImage(ctx context.Context, breed string) (string, error)
 }
 
-func NewServer() *server {
+type server struct {
+	dogsService DogsService
+	grpcServer  *grpc.Server
+	proto.UnimplementedHealthServer
+	proto.UnimplementedDogServiceServer
+}
+
+func NewServer(dogsService DogsService) *server {
 	s := &server{
+		dogsService: dogsService,
 		grpcServer: grpc.NewServer(grpc.ChainUnaryInterceptor(
 			LogInterceptor,
 			ValidationInterceptor,
@@ -23,7 +31,7 @@ func NewServer() *server {
 	}
 
 	proto.RegisterHealthServer(s.grpcServer, s)
-
+	proto.RegisterDogServiceServer(s.grpcServer, s)
 	reflection.Register(s.grpcServer)
 
 	return s
