@@ -1,7 +1,6 @@
 - middlewares (logging) - done
-- proper erros
-- project struct + arch - semi done
-- http finalizer
+- project struct + arch - done
+- http finalizer - done
 - swagger docs - done
 - metrics
 - tracing
