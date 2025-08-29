@@ -6,11 +6,22 @@ MIGRATION_DIR_MYSQL = ./migrations/mysql/
 MIGRATION_DIR_CLICKHOUSE = ./migrations/clickhouse/
 APP_DIR= ./cmd/app
 
-.PHONY: run up up-dev down migrate-up migrate-down migrate-status migrate-create test test-verbose swagger-init
+.PHONY: run run-pg run-mysql run-ch up up-dev up-pg up-mysql up-ch down migrate-up migrate-down migrate-status migrate-create test test-verbose swagger-init dev-pg dev-mysql dev-ch
 
-# Run application locally
-run:
-	@export $$(grep -v '^#' ./.env | xargs) >/dev/null 2>&1; \
+
+# Run application with PostgreSQL
+run-pg:
+	@export $$(grep -v '^#' ./docker/.env-pg | xargs) >/dev/null 2>&1; \
+	go run $(APP_DIR)/main.go
+
+# Run application with MySQL
+run-mysql:
+	@export $$(grep -v '^#' ./docker/.env-mysql | xargs) >/dev/null 2>&1; \
+	go run $(APP_DIR)/main.go
+
+# Run application with ClickHouse
+run-ch:
+	@export $$(grep -v '^#' ./docker/.env-ch | xargs) >/dev/null 2>&1; \
 	go run $(APP_DIR)/main.go
 
 # Start the services with Docker Compose (infrastructure + app)
@@ -20,6 +31,18 @@ up:
 # Start the infrastructure with Docker Compose
 up-dev: 
 	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env up -d --build
+
+# Start PostgreSQL infrastructure
+up-pg:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.postgres.yml --env-file=docker/.env-docker-pg up -d --build
+
+# Start MySQL infrastructure
+up-mysql:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.mysql.yml --env-file=docker/.env-docker-mysql up -d --build
+
+# Start ClickHouse infrastructure
+up-ch:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.clickhouse.yml --env-file=docker/.env-docker-ch up -d --build
 
 # Stop all services
 down:
@@ -94,6 +117,7 @@ migrate-create-clickhouse:
 migrate-up: migrate-up-pg migrate-up-mysql migrate-up-clickhouse
 migrate-down: migrate-down-pg migrate-down-mysql migrate-down-clickhouse
 migrate-status: migrate-status-pg migrate-status-mysql migrate-status-clickhouse
+
 
 bucket-create:
 	docker exec platform_minio mc alias set myminio http://localhost:9000 minioadmin minioadmin

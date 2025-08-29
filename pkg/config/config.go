@@ -17,6 +17,7 @@ type Config struct {
 type ServerConfig struct {
 	HTTPPort string `env:"SERVER_PORT" env-default:"8080"`
 	GRPCPort string `env:"GRPC_PORT" env-default:"50051"`
+	Storage  string `env:"STORAGE" env-default:"postgres"`
 }
 
 type S3 struct {
@@ -37,9 +38,9 @@ type Logger struct {
 }
 
 type DatabaseConfig struct {
-	PostgresDSN   string `env:"POSTGRES_DSN" env-required:"true"`
-	MySQLDSN      string `env:"MYSQL_DSN" env-required:"true"`
-	ClickHouseDSN string `env:"CLICKHOUSE_DSN" env-required:"true"`
+	PostgresDSN   string `env:"POSTGRES_DSN"`
+	MySQLDSN      string `env:"MYSQL_DSN"`
+	ClickHouseDSN string `env:"CLICKHOUSE_DSN"`
 }
 
 type RedisConfig struct {

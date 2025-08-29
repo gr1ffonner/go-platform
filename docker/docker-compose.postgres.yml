@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: platform_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-go_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - platform_network
+
+  redis:
+    image: redis:7.2-alpine
+    command: redis-server --appendonly no --save "" --requirepass ""  
+    container_name: platform_redis
+    environment:
+      REDIS_ZONE_ID: "25"
+      REDIS_PORT: "6379"
+    ports:
+      - "6379:6379"
+    networks:
+      - platform_network
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: platform_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    networks:
+      - platform_network
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: platform_nats
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
+    command: ["-m", "8222", "-js"]
+    networks:
+      - platform_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  platform_network:
+    driver: bridge
