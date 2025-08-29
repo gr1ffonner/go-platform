@@ -140,7 +140,9 @@ make run-mysql # mysql repo
 - Kafka (soon)
 - RabbitMQ (soon)
 
-## Мониторинг и обсервабельность
+## Мониторинг и обсервабельность + логи
+
+### Стандартный log/slog 
 
 ### Стек OpenTelemetry
 - **OpenTelemetry Collector** - центральный хаб для сбора телеметрии
