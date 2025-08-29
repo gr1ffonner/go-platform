@@ -89,3 +89,40 @@
         │   └── models.go
         └── utils.go
 ```
+
+# Как поднять проект
+
+## Все в докере
+```bash
+make full-pg # postgresql repo
+make full-ch # clickhouse repo
+make full-mysql # mysql repo
+```
+
+## Инфру в докере, приложение локально
+```bash
+make up-pg # postgresql repo
+make up-ch # clickhouse repo
+make up-mysql # mysql repo
+
+make run-pg # postgresql repo
+make run-ch # clickhouse repo
+make run-mysql # mysql repo
+```
+
+# Список технологий 
+
+## Базы данных
+
+### SQL
+- Postgresql
+- Mysql
+
+### NoSql
+- Redis (cache)
+- Minio S3 analog (file storage)
+
+## Брокеры сообщений
+- Nats
+- Kafka (soon)
+- RabbitMQ (soon)
