@@ -6,7 +6,7 @@ MIGRATION_DIR_MYSQL = ./migrations/mysql/
 MIGRATION_DIR_CLICKHOUSE = ./migrations/clickhouse/
 APP_DIR= ./cmd/app
 
-.PHONY: run run-pg run-mysql run-ch up up-dev up-pg up-mysql up-ch down migrate-up migrate-down migrate-status migrate-create test test-verbose swagger-init dev-pg dev-mysql dev-ch
+.PHONY: run run-pg run-mysql run-ch up-full-pg up-full-mysql up-full-ch up-pg up-mysql up-ch down migrate-up migrate-down migrate-status migrate-create test test-verbose swagger-init dev-pg dev-mysql dev-ch full-pg full-mysql full-ch
 
 
 # Run application with PostgreSQL
@@ -24,13 +24,17 @@ run-ch:
 	@export $$(grep -v '^#' ./docker/.env-ch | xargs) >/dev/null 2>&1; \
 	go run $(APP_DIR)/main.go
 
-# Start the services with Docker Compose (infrastructure + app)
-up: 
-	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env-docker --profile=test up -d --build 
+# Start full stack with PostgreSQL (infrastructure + app)
+full-pg:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.postgres.yml --env-file=docker/.env-docker-pg --profile=test up -d --build 
 
-# Start the infrastructure with Docker Compose
-up-dev: 
-	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env up -d --build
+# Start full stack with MySQL (infrastructure + app)
+full-mysql:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.mysql.yml --env-file=docker/.env-docker-mysql --profile=test up -d --build 
+
+# Start full stack with ClickHouse (infrastructure + app)
+full-ch:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker/docker-compose.clickhouse.yml --env-file=docker/.env-docker-ch --profile=test up -d --build 
 
 # Start PostgreSQL infrastructure
 up-pg:
@@ -120,7 +124,7 @@ migrate-status: migrate-status-pg migrate-status-mysql migrate-status-clickhouse
 
 
 bucket-create:
-	docker exec platform_minio mc alias set myminio http://localhost:9000 minioadmin minioadmin
+	docker exec platform_minio mc alias set myminio http://minio:9000 minioadmin minioadmin
 	docker exec platform_minio mc mb myminio/dogs
 
 # Swagger documentation

@@ -34,6 +34,7 @@ func main() {
 		slog.Error("Failed to load config", "error", err)
 		panic(err)
 	}
+	slog.Info("Config loaded", "config", cfg)
 
 	// Initialize unified logger
 	logger.InitLogger(cfg.Logger)

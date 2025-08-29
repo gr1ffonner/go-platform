@@ -1,4 +1,24 @@
 services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: platform_app
+    env_file:
+      - .env-docker-mysql
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+      - "${GRPC_PORT:-50051}:50051"
+    depends_on:
+      - mysql
+      - redis
+      - minio
+      - nats
+    networks:
+      - platform_network
+    profiles:
+      - test
+
   mysql:
     image: mysql:8.0
     container_name: platform_mysql

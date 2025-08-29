@@ -1,4 +1,24 @@
 services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: platform_app
+    env_file:
+      - .env-docker-ch
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+      - "${GRPC_PORT:-50051}:50051"
+    depends_on:
+      - clickhouse
+      - redis
+      - minio
+      - nats
+    networks:
+      - platform_network
+    profiles:
+      - test
+
   clickhouse:
     image: clickhouse/clickhouse-server:23.8
     container_name: platform_clickhouse
