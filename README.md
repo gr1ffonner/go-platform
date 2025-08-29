@@ -2,14 +2,14 @@
 - В папке docker куча файлов, так как конкретно в этой репе хочу как можно больше технологий заюзать, скоро еще добавится кафка и рэббит для брокеров, так что этих файлов станет еще больше, ниже приведу классическую арху проекта, которую юзаю сам
 ```
 .
-├── CHANGELOG.md
-├── Dockerfile
-├── Makefile
-├── README.md
-├── .env-docker
-├── .env
-├── TODO.md
-├── api
+├── CHANGELOG.md         # история изменений 
+├── Dockerfile           # сборка приложения
+├── Makefile             # команды управления
+├── README.md            # документация
+├── .env-docker          # переменные для докера
+├── .env                 # локальные переменные
+├── TODO.md              # список задач
+├── api                  # API документация
 │   ├── docs.go
 │   ├── protobuf
 │   │   ├── dogs.pb.go
@@ -20,13 +20,13 @@
 │   │   └── health_grpc.pb.go
 │   ├── swagger.json
 │   └── swagger.yaml
-├── cmd
-│   └── app
-│       └── main.go
-├── docker-compose.yml
-├── go.mod
-├── go.sum
-├── internal
+├── cmd                  # точка входа
+│   └── app
+│       └── main.go
+├── docker-compose.yml  # инфраструктура для приложения (бд, брокеры)
+├── go.mod              # зависимости
+├── go.sum              # хеши зависимостей
+├── internal            # внутренняя логика
 │   ├── clients
 │   │   ├── rest-client-example
 │   │   │   └── client.go
@@ -56,14 +56,14 @@
 │       │   └── repository.go
 │       └── postgresql
 │           └── repository.go
-├── migrations
+├── migrations          # миграции БД
 │   ├── clickhouse
 │   │   └── 001_create_dogs_table.sql
 │   ├── mysql
 │   │   └── 001_create_dogs_table.sql
 │   └── postgres
 │       └── 001_create_dogs_table.sql
-└── pkg
+└── pkg                 # переиспользуемые пакеты
     ├── broker
     │   └── nats
     │       └── nats.go
@@ -89,6 +89,9 @@
         │   └── models.go
         └── utils.go
 ```
+
+# Комментарии к архитектуре 
+- Changelog как правило ведем уже после релиза на прод, для доп трекинга фичей, которые мы релизим, туда же линкуем фичи по возможности [read](https://keepachangelog.com/ru/1.1.0/)
 
 # Как поднять проект
 
