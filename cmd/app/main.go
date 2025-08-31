@@ -11,6 +11,7 @@ import (
 	"go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
 	"go-platform/pkg/logger"
+	"go-platform/pkg/metrics"
 	"go-platform/pkg/server"
 	"go-platform/pkg/utils"
 	"log/slog"
@@ -43,8 +44,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	metricsInstance, err := metrics.NewMetrics(cfg.MetricsProvider)
+	if err != nil {
+		slog.Error("Failed to initialize metrics", "error", err)
+		panic(err)
+	}
+
 	// Storage layer initializing
-	storage, err := utils.GetStorage(ctx, cfg)
+	storage, err := utils.GetStorage(ctx, cfg, metricsInstance.Database)
 	if err != nil {
 		slog.Error("Failed to get storage", "error", err)
 		panic(err)
@@ -97,7 +104,7 @@ func main() {
 	grpcServer := grpc.NewServer(dogsService)
 
 	// Create unified server first to get metrics
-	srv, err := server.NewServer(cfg, nil, grpcServer)
+	srv, err := server.NewServer(cfg, nil, grpcServer, metricsInstance)
 	if err != nil {
 		log.Error("Failed to create server", "error", err)
 		panic(err)

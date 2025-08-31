@@ -8,18 +8,30 @@ import (
 
 	models "go-platform/internal/models/dogs"
 	"go-platform/pkg/db/mysql"
+	"go-platform/pkg/metrics"
 )
 
-type MySQLRepository struct {
-	mysql *mysql.MySQLClient
+type MySQLRepositoryMetricsInterface interface {
+	RecordQuery(operation, table string, duration time.Duration)
+	RecordError(operation, table, errorType string)
 }
 
-func NewMySQLRepository(mysql *mysql.MySQLClient) *MySQLRepository {
-	return &MySQLRepository{mysql: mysql}
+type MySQLRepository struct {
+	mysql     *mysql.MySQLClient
+	dbMetrics MySQLRepositoryMetricsInterface
+}
+
+func NewMySQLRepository(mysql *mysql.MySQLClient, dbMetrics *metrics.DatabaseMetrics) *MySQLRepository {
+	return &MySQLRepository{mysql: mysql, dbMetrics: dbMetrics}
 }
 
 // InsertDog inserts a dog into MySQL
 func (r *MySQLRepository) InsertDog(ctx context.Context, dog *models.Dog) (string, error) {
+	start := time.Now()
+	defer func() {
+		r.dbMetrics.RecordQuery("insert", "dogs", time.Since(start))
+	}()
+
 	query := `
 		INSERT INTO dogs (breed, image_url, created_at)
 		VALUES (?, ?, ?)`

@@ -37,12 +37,7 @@ type ServerConfig struct {
 }
 
 // NewServer creates a new server instance with both HTTP and gRPC servers
-func NewServer(cfg *config.Config, httpHandler http.Handler, grpcServer GRPCServer) (*Server, error) {
-	// Initialize metrics
-	metricsInstance, err := metrics.NewMetrics(cfg.MetricsProvider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize metrics: %w", err)
-	}
+func NewServer(cfg *config.Config, httpHandler http.Handler, grpcServer GRPCServer, metricsInstance *metrics.Metrics) (*Server, error) {
 
 	// Initialize tracer
 	ctx := context.Background()
@@ -77,9 +72,6 @@ func NewServer(cfg *config.Config, httpHandler http.Handler, grpcServer GRPCServ
 // Start starts both HTTP and gRPC servers
 func (s *Server) Start(ctx context.Context) error {
 	// Start system metrics collection
-	go s.Metrics.System.StartCollection(ctx)
-
-	// Start Prometheus metrics server
 	go func() {
 		if err := s.Metrics.StartPrometheusServer(ctx, s.ServerConfig.MetricsPort); err != nil {
 			slog.Error("Prometheus metrics server error", "error", err)

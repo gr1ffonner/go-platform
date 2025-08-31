@@ -5,17 +5,25 @@ import (
 	"fmt"
 	"go-platform/internal/models/dogs"
 	"go-platform/pkg/db/clickhouse"
+	"go-platform/pkg/metrics"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-type ClickHouseRepository struct {
-	clickhouse *clickhouse.ClickHouseClient
+type ClickHouseRepositoryMetricsInterface interface {
+	RecordQuery(operation, table string, duration time.Duration)
+	RecordError(operation, table, errorType string)
 }
 
-func NewClickHouseRepository(clickhouse *clickhouse.ClickHouseClient) *ClickHouseRepository {
-	return &ClickHouseRepository{clickhouse: clickhouse}
+type ClickHouseRepository struct {
+	clickhouse *clickhouse.ClickHouseClient
+	dbMetrics  ClickHouseRepositoryMetricsInterface
+}
+
+func NewClickHouseRepository(clickhouse *clickhouse.ClickHouseClient, dbMetrics *metrics.DatabaseMetrics) *ClickHouseRepository {
+	return &ClickHouseRepository{clickhouse: clickhouse, dbMetrics: dbMetrics}
 }
 
 // InsertDog inserts a dog into ClickHouse

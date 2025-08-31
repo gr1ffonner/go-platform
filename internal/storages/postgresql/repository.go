@@ -8,18 +8,30 @@ import (
 
 	"go-platform/internal/models/dogs"
 	"go-platform/pkg/db/postgre"
+	"go-platform/pkg/metrics"
 )
 
-type PostgresRepository struct {
-	postgres *postgre.PostgresClient
+type PostgresRepositoryMetricsInterface interface {
+	RecordQuery(operation, table string, duration time.Duration)
+	RecordError(operation, table, errorType string)
 }
 
-func NewPostgresRepository(postgres *postgre.PostgresClient) *PostgresRepository {
-	return &PostgresRepository{postgres: postgres}
+type PostgresRepository struct {
+	postgres  *postgre.PostgresClient
+	dbMetrics PostgresRepositoryMetricsInterface
+}
+
+func NewPostgresRepository(postgres *postgre.PostgresClient, dbMetrics *metrics.DatabaseMetrics) *PostgresRepository {
+	return &PostgresRepository{postgres: postgres, dbMetrics: dbMetrics}
 }
 
 // InsertDog inserts a dog into PostgreSQL
 func (r *PostgresRepository) InsertDog(ctx context.Context, dog *dogs.Dog) (string, error) {
+	start := time.Now()
+	defer func() {
+		r.dbMetrics.RecordQuery("insert", "dogs", time.Since(start))
+	}()
+
 	query := `
 		INSERT INTO dogs (breed, image_url, created_at)
 		VALUES ($1, $2, $3)
@@ -35,5 +47,6 @@ func (r *PostgresRepository) InsertDog(ctx context.Context, dog *dogs.Dog) (stri
 	}
 
 	slog.Info("Dog inserted into PostgreSQL", "id", id)
+
 	return fmt.Sprintf("%d", id), nil
 }

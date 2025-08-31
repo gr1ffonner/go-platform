@@ -61,6 +61,16 @@ test:
 	@echo "Running all tests..."
 	go test ./... -v
 
+# Run quick load test
+test-quick:
+	@echo "Running quick test..."
+	./tests/quick_test.sh
+
+# Run aggressive load test
+test-load:
+	@echo "Running aggressive load test..."
+	./tests/load_test.sh
+
 # Run tests with verbose output and coverage
 test-verbose:
 	@echo "Running tests with verbose output and coverage..."

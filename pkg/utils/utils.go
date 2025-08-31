@@ -13,10 +13,16 @@ import (
 	"go-platform/pkg/db/clickhouse"
 	"go-platform/pkg/db/mysql"
 	"go-platform/pkg/db/postgre"
+	"go-platform/pkg/metrics"
 	"log/slog"
 	"net/http"
 	"time"
 )
+
+type RepositoryMetricsInterface interface {
+	RecordQuery(operation, table string, duration time.Duration)
+	RecordError(operation, table, errorType string)
+}
 
 type Repository interface {
 	// return string due to clickhouse dont have auto increment and
@@ -73,7 +79,7 @@ type Storage struct {
 	DBClient   interface{}
 }
 
-func GetStorage(ctx context.Context, cfg *config.Config) (*Storage, error) {
+func GetStorage(ctx context.Context, cfg *config.Config, dbMetrics *metrics.DatabaseMetrics) (*Storage, error) {
 	// Initialize storage
 	switch cfg.Server.Storage {
 	case "postgres":
@@ -87,7 +93,7 @@ func GetStorage(ctx context.Context, cfg *config.Config) (*Storage, error) {
 		}
 		slog.Info("PostgreSQL connected successfully")
 
-		pgRepository := postgresql.NewPostgresRepository(pgStorage)
+		pgRepository := postgresql.NewPostgresRepository(pgStorage, dbMetrics)
 		slog.Info("PostgreSQL repository initialized")
 
 		return &Storage{
@@ -106,7 +112,7 @@ func GetStorage(ctx context.Context, cfg *config.Config) (*Storage, error) {
 		}
 		slog.Info("MySQL connected successfully")
 
-		mysqlRepository := mysqlRepo.NewMySQLRepository(mysqlStorage)
+		mysqlRepository := mysqlRepo.NewMySQLRepository(mysqlStorage, dbMetrics)
 		slog.Info("MySQL repository initialized")
 
 		return &Storage{
@@ -125,7 +131,7 @@ func GetStorage(ctx context.Context, cfg *config.Config) (*Storage, error) {
 		}
 		slog.Info("ClickHouse connected successfully")
 
-		clickhouseRepository := clickhouseRepo.NewClickHouseRepository(clickhouseStorage)
+		clickhouseRepository := clickhouseRepo.NewClickHouseRepository(clickhouseStorage, dbMetrics)
 		slog.Info("ClickHouse repository initialized")
 
 		return &Storage{
