@@ -3,6 +3,8 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
+
+	"go-platform/pkg/metrics"
 )
 
 // LoggingMiddleware logs the details of each request and response
@@ -15,6 +17,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		slog.Info("Response status", "status", lrw.statusCode)
 	})
+}
+
+// MetricsMiddleware creates HTTP middleware for metrics collection
+func MetricsMiddleware(httpMetrics *metrics.HTTPMetrics) func(http.Handler) http.Handler {
+	return httpMetrics.HTTPMiddleware
 }
 
 type LoggingResponseWriter struct {

@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	restclientexample "go-platform/internal/clients/rest-client-example"
 	"go-platform/internal/clients/s3"
 	grpc "go-platform/internal/gprc"
@@ -13,10 +11,9 @@ import (
 	"go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
 	"go-platform/pkg/logger"
+	"go-platform/pkg/server"
 	"go-platform/pkg/utils"
 	"log/slog"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -93,49 +90,34 @@ func main() {
 	// Initialize dogs service
 	dogsService := dogs.NewDogsService(dogsAPI, s3Client, storage.Repository)
 
-	// Initialize handlers and router
+	// Initialize handlers
 	handler := handlers.NewHandler(dogsService)
-	router := handlers.InitRouter(handler)
-
-	grpcPort := cfg.Server.GRPCPort
-	httpPort := cfg.Server.HTTPPort
-
-	// HTTP server
-	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%s", httpPort),
-		Handler: router,
-	}
 
 	// gRPC server
 	grpcServer := grpc.NewServer(dogsService)
 
-	grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%s", grpcPort))
+	// Create unified server first to get metrics
+	srv, err := server.NewServer(cfg, nil, grpcServer)
 	if err != nil {
-		log.Error("failed to create gRPC listener", "error", err)
-		os.Exit(1)
+		log.Error("Failed to create server", "error", err)
+		panic(err)
 	}
+
+	// Initialize router with metrics
+	router := handlers.InitRouter(handler, srv.Metrics.HTTP)
+
+	// Update server with the router
+	srv.HTTP.Handler = router
 
 	// Setup signal handling
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	// Start HTTP server
-	go func() {
-		log.Info("Starting HTTP server", "port", httpPort)
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Error("HTTP server error", "error", err)
-			cancel()
-		}
-	}()
-
-	// Start gRPC server
-	go func() {
-		log.Info("Starting gRPC server", "port", grpcPort)
-		if err := grpcServer.Serve(grpcListener); err != nil {
-			log.Error("failed to serve gRPC", "error", err)
-			cancel()
-		}
-	}()
+	// Start server
+	if err := srv.Start(ctx); err != nil {
+		log.Error("Failed to start server", "error", err)
+		panic(err)
+	}
 
 	log.Info("All servers are ready to handle requests")
 
@@ -148,5 +130,10 @@ func main() {
 	}
 
 	// Graceful shutdown
-	utils.GracefulShutdown(ctx, httpServer, grpcServer, storage.DBClient, cache, broker)
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error("Server shutdown error", "error", err)
+	}
+
+	// Additional cleanup
+	utils.GracefulShutdown(ctx, nil, nil, storage.DBClient, cache, broker)
 }

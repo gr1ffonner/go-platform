@@ -5,13 +5,14 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	NATS     NATSConfig
-	Logger   Logger
-	S3       S3
-	DogAPI   DogAPIConfig
+	Server          ServerConfig
+	Database        DatabaseConfig
+	Redis           RedisConfig
+	NATS            NATSConfig
+	Logger          Logger
+	S3              S3
+	DogAPI          DogAPIConfig
+	MetricsProvider MetricsProviderConfig
 }
 
 type ServerConfig struct {
@@ -51,6 +52,15 @@ type RedisConfig struct {
 
 type NATSConfig struct {
 	URL string `env:"NATS_URL" env-default:"nats://localhost:4222"`
+}
+
+type MetricsProviderConfig struct {
+	ServiceName    string `env:"OTEL_SERVICE_NAME" env-default:"go-platform"`
+	ServiceVersion string `env:"OTEL_SERVICE_VERSION" env-default:"1.0.0"`
+	Environment    string `env:"ENVIRONMENT" env-default:"development"`
+	OTLPEndpoint   string `env:"OTEL_EXPORTER_OTLP_ENDPOINT" env-default:"localhost:4317"`
+	Insecure       bool   `env:"OTEL_EXPORTER_OTLP_INSECURE" env-default:"true"`
+	PrometheusPort string `env:"PROMETHEUS_PORT" env-default:"9090"`
 }
 
 func Load() (*Config, error) {

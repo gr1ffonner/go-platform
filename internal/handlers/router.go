@@ -4,14 +4,19 @@ import (
 	"net/http"
 
 	_ "go-platform/api"
+	"go-platform/pkg/metrics"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func InitRouter(h *Handler) *mux.Router {
+func InitRouter(h *Handler, httpMetrics *metrics.HTTPMetrics) *mux.Router {
 	router := mux.NewRouter()
 
+	// Add metrics middleware first (to capture all requests)
+	router.Use(MetricsMiddleware(httpMetrics))
+
+	// Add logging middleware
 	router.Use(LoggingMiddleware)
 
 	// Health
