@@ -123,6 +123,33 @@ make run-ch # clickhouse repo
 make run-mysql # mysql repo
 ```
 
+# Порты
+
+## Основные сервисы
+- **Go Platform App**: `8080` (HTTP API), `50051` (gRPC), `9090` (Prometheus metrics)
+- **Grafana**: `3000` (UI для дашбордов и трейсов)
+- **Prometheus**: `9091` (метрики и алерты)
+
+## Базы данных
+- **PostgreSQL**: `5432` (основной порт)
+- **MySQL**: `3306` (основной порт)  
+- **ClickHouse**: `9000` (нативный клиент), `8123` (HTTP интерфейс)
+- **Redis**: `6379` (кеш)
+
+## Брокеры сообщений
+- **NATS**: `4222` (основной порт), `8222` (мониторинг)
+
+## Файловое хранилище
+- **MinIO S3**: `9002` (API), `9003` (веб-консоль)
+
+## OpenTelemetry стек
+- **OTEL Collector**: 
+  - `4317` (OTLP gRPC receiver)
+  - `4318` (OTLP HTTP receiver) 
+  - `8888` (Prometheus metrics)
+  - `8889` (Prometheus exporter metrics)
+- **Grafana Tempo**: `3200` (HTTP), `9095` (gRPC)
+
 # Список технологий 
 
 ## Базы данных
