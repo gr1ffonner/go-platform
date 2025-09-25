@@ -7,8 +7,8 @@ import (
 	grpc "go-platform/internal/gprc"
 	"go-platform/internal/handlers"
 	"go-platform/internal/services/dogs"
-	"go-platform/pkg/broker/nats"
-	"go-platform/pkg/cache/redis"
+	broker "go-platform/pkg/broker/nats"
+	cache "go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
 	"go-platform/pkg/logger"
 	"go-platform/pkg/metrics"
@@ -74,7 +74,7 @@ func main() {
 	slog.Info("S3 client connected successfully")
 
 	// Initialize cache
-	cache, err := redis.NewRedis(ctx, cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	_, err = cache.NewRedis(ctx, cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
 	if err != nil {
 		log.Error("Failed to connect to Redis", "error", err)
 		panic(err)
@@ -83,7 +83,7 @@ func main() {
 	slog.Info("Cache connected successfully")
 
 	// Initialize broker
-	broker, err := nats.NewNATS(ctx, cfg.NATS.URL)
+	_, err = broker.NewNATS(ctx, cfg.NATS.URL)
 	if err != nil {
 		log.Error("Failed to connect to NATS", "error", err)
 		panic(err)
@@ -141,6 +141,4 @@ func main() {
 		log.Error("Server shutdown error", "error", err)
 	}
 
-	// Additional cleanup
-	utils.GracefulShutdown(ctx, nil, nil, storage.DBClient, cache, broker)
 }

@@ -5,12 +5,13 @@ services:
       dockerfile: docker/Dockerfile
     container_name: platform_app
     env_file:
-      - .env-docker-ch
+      - .env-docker
+
     ports:
       - "${SERVER_PORT:-8080}:8080"
       - "${GRPC_PORT:-50051}:50051"
     depends_on:
-      - clickhouse
+      - postgres
       - redis
       - minio
       - nats
@@ -20,19 +21,18 @@ services:
     profiles:
       - test
 
-  clickhouse:
-    image: clickhouse/clickhouse-server:23.8
-    container_name: platform_clickhouse
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: platform_postgres
     environment:
-      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-go_platform}
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-admin}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-admin}
-      CLICKHOUSE_LISTEN_HOST: 0.0.0.0
+      POSTGRES_DB: ${POSTGRES_DB:-go_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
     ports:
-      - "${CLICKHOUSE_PORT:-9000}:9000"
-      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - clickhouse_data:/var/lib/clickhouse
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - platform_network
 
@@ -140,7 +140,7 @@ services:
       - platform_network
 
 volumes:
-  clickhouse_data:
+  postgres_data:
   redis_data:
   tempo_data:
   grafana_data:
