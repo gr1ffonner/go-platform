@@ -7,13 +7,14 @@ import (
 	grpc "go-platform/internal/gprc"
 	"go-platform/internal/handlers"
 	"go-platform/internal/services/dogs"
+	"go-platform/internal/storages/postgresql"
 	broker "go-platform/pkg/broker/nats"
 	cache "go-platform/pkg/cache/redis"
 	"go-platform/pkg/config"
+	"go-platform/pkg/db/postgre"
 	"go-platform/pkg/logger"
 	"go-platform/pkg/metrics"
 	"go-platform/pkg/server"
-	"go-platform/pkg/utils"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -50,12 +51,14 @@ func main() {
 		panic(err)
 	}
 
-	// Storage layer initializing
-	storage, err := utils.GetStorage(ctx, cfg, metricsInstance.Database)
+	postgres, err := postgre.NewPostgres(ctx, cfg.Database.PostgresDSN)
 	if err != nil {
-		slog.Error("Failed to get storage", "error", err)
+		slog.Error("Failed to connect to Postgres", "error", err)
 		panic(err)
 	}
+
+	// Storage layer initializing
+	postgresRepository := postgresql.NewPostgresRepository(postgres, metricsInstance.Database)
 
 	// Initialize S3 client
 	s3Client, err := s3.NewClientS3(
@@ -95,7 +98,7 @@ func main() {
 	dogsAPI := restclientexample.NewDogAPI()
 
 	// Initialize dogs service
-	dogsService := dogs.NewDogsService(dogsAPI, s3Client, storage.Repository)
+	dogsService := dogs.NewDogsService(dogsAPI, s3Client, postgresRepository)
 
 	// Initialize handlers
 	handler := handlers.NewHandler(dogsService)
