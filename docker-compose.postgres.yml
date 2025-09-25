@@ -61,6 +61,21 @@ services:
     networks:
       - platform_network
 
+  init-minio:
+    image: minio/mc:latest
+    container_name: platform_minio_init
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/dogs;
+      exit 0;
+      "
+
+
   nats:
     image: nats:2.10-alpine
     container_name: platform_nats
