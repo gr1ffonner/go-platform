@@ -1,8 +1,8 @@
 services:
   app:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: platform_app
     env_file:
       - .env-docker
@@ -92,7 +92,7 @@ services:
     container_name: platform_otel_collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ../infra/otel-collector/config.yaml:/etc/otel-collector-config.yaml
+      - ./infra/otel-collector/config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317"   # OTLP gRPC receiver
       - "4318:4318"   # OTLP HTTP receiver
@@ -109,7 +109,7 @@ services:
     container_name: platform_tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
-      - ../infra/tempo/config.yaml:/etc/tempo.yaml
+      - ./infra/tempo/config.yaml:/etc/tempo.yaml
       - tempo_data:/var/tempo
     ports:
       - "3200:3200"   # Tempo HTTP
@@ -128,9 +128,9 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ../infra/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-      - ../infra/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
-      - ../infra/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./infra/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./infra/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - tempo
     networks:
@@ -143,7 +143,7 @@ services:
     ports:
       - "9091:9090"
     volumes:
-      - ../infra/prometheus/scrape_config.yml:/etc/prometheus/prometheus.yml
+      - ./infra/prometheus/scrape_config.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'

@@ -5,31 +5,37 @@ APP_DIR= ./cmd/app
 
 # Run application with PostgreSQL
 run:
-	@export $$(grep -v '^#' ./docker/.env-pg | xargs) >/dev/null 2>&1; \
+	@export $$(grep -v '^#' .env | xargs) >/dev/null 2>&1; \
 	go run $(APP_DIR)/main.go
 
 # Start all services
 up:
-	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.postgres.yml --env-file=.env-docker up -d --build
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --profile=test --env-file=.env-docker up -d --build
 
 # Start only infrastructure
-up-dev:
-	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.postgres.yml --env-file=.env up -d --profile=test
+up-infra:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env up -d 
 
 # Stop all services
 down:
-	COMPOSE_PROJECT_NAME=go-platform docker compose down
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --profile=test --env-file=.env-docker down --remove-orphans
 
 # Stop and remove volumes
-down-clean:
-	COMPOSE_PROJECT_NAME=go-platform docker compose down -v
+down-infra:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env down --remove-orphans
+
+clean:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --profile=test --env-file=.env-docker down -v --remove-orphans
+
+clean-infra:
+	COMPOSE_PROJECT_NAME=go-platform docker compose -f docker-compose.yml --env-file=.env down -v --remove-orphans
+
+
 
 # Run all tests
 test:
 	@echo "Running all tests..."
 	go test ./... -v
-
-
 
 # Run tests with verbose output and coverage
 test-verbose:
