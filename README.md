@@ -1,5 +1,7 @@
 # Go Platfrom
 
+## [Readme](https://github.com/gr1ffonner/go-platform/blob/feature/postgresql-nats-otel-tempo/docs/README.md) проекта
+
 ## Общее
 
 ### Monitoring
