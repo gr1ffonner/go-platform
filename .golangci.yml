@@ -1,0 +1,51 @@
+# reference: https://github.com/golangci/golangci-lint/blob/HEAD/.golangci.reference.yml
+version: "2"
+
+run:
+  concurrency: 8
+  timeout: 10m # timeout for total work time
+  issues-exit-code: 1 # exit with code 1 if there are issues
+  tests: true # include test files
+
+linters:
+  default: none
+  enable:
+    - govet        # std analyzer: real bugs & suspicious constructs (fast)
+    - staticcheck  # advanced correctness & APIs misuse (medium)
+    - ineffassign  # detects ineffectual assignments (fast)
+    - revive       # style/best practices with low noise (fast)
+    - misspell     # common spelling mistakes (fast)
+    - bodyclose    # ensure HTTP response bodies are closed (medium)
+    - unused       # finds unused vars/funcs (medium)
+    - goconst      # factor out repeated string/int constants (fast)
+    - gocritic     # pragmatic code smells & pitfalls (medium)
+    - gocyclo      # reports high cyclomatic complexity (medium/slow on large files)
+  
+  settings:
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: add-constant      
+          arguments:
+            - max-lit-count: "3" # add constants for up to 3 literals
+              allow-strs: '""' # don't add constants for listed strings
+              allow-ints: "0,1,2,400,401,404,403,409,422,500,502,503,504,200" # don't add constants for listed ints
+        - name: unhandled-error
+          # don't require error handling for listed functions
+          arguments:
+            - "os.File.Close"
+            - "net/http.ResponseWriter.Write"
+        - name: exported           # don't require comments on exported identifiers
+          disabled: true
+        - name: package-comments   # don't require package comments
+          disabled: true
+        - name: line-length-limit  # don't enforce line length limit
+          disabled: true
+
+formatters:
+  enable:
+    - gci       # organize imports into groups (fast)
+    - gofmt     # canonical Go formatting (fast)
+    - gofumpt   # stricter gofmt; tiny readability tweaks (fast)
+    - goimports # fix imports automatically (fast)
+    - golines   # wrap long lines smartly (medium)
