@@ -5,6 +5,10 @@
 - swagger docs - done
 - metrics
 - tracing
+- update makefile
+- tests
+- linters
+- all branches validation
 
 
 # Storages
